@@ -3,6 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {"dev":"next dev","build":"next build","start":"next start","lint":"eslint ."},
-  "dependencies": {"@ai-sdk/openai":"latest","ai":"latest","next":"latest","react":"latest","react-dom":"latest","zod":"latest","tailwindcss":"latest","@tailwindcss/postcss":"latest"},
+  "dependencies": {"@ai-sdk/openai":"latest","@supabase/ssr":"latest","@supabase/supabase-js":"latest","ai":"latest","next":"latest","react":"latest","react-dom":"latest","zod":"latest","tailwindcss":"latest","@tailwindcss/postcss":"latest"},
   "devDependencies": {"@types/node":"latest","@types/react":"latest","@types/react-dom":"latest","eslint":"latest","eslint-config-next":"latest","typescript":"latest"}
 }
