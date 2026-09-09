@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
-import { getPlan, PLAN_LIMITS } from '../../../lib/plan';
+import { getAuthenticatedUser } from '../../../lib/usage';
+import { PLAN_LIMITS } from '../../../lib/plan';
 
-export async function GET(request: Request) {
-  // Temporary authenticated-user boundary: production auth will supply the user and plan.
-  const plan = getPlan(new URL(request.url).searchParams.get('plan'));
-  const limits = PLAN_LIMITS[plan];
+export async function GET() {
+  const { supabase, user, plan } = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  return NextResponse.json({
-    plan,
-    limits,
-    note: 'Usage counters are enforced server-side after authentication and database connection are configured.',
+  const { data, error } = await supabase.rpc('get_usage', {
+    p_user_id: user.id,
+    p_plan: plan,
   });
+  if (error) {
+    console.error('Usage read error', error);
+    return NextResponse.json({ error: 'Unable to load usage.' }, { status: 500 });
+  }
+
+  const limits = PLAN_LIMITS[plan];
+  return NextResponse.json({ plan, limits, usage: data ?? [] });
 }
