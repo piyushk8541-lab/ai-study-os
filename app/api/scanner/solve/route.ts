@@ -10,7 +10,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: 'AI is not configured yet.' }, { status: 503 });
+    if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: 'AI is not configured yet.' }, { status: 503 });
 
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return NextResponse.json({ error: 'Please provide the extracted question text.' }, { status: 400 });
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     await usage.supabase.from('usage_events').insert({
       user_id: usage.user.id,
       feature: 'scanner',
-      model: process.env.AI_MODEL_STANDARD || 'gpt-5.6-terra',
+      model: process.env.AI_MODEL_STANDARD || 'gemini-2.5-flash',
       units: 1,
     });
 
