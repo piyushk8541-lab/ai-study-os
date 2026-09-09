@@ -10,7 +10,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ error: "AI is not configured yet." }, { status: 503 });
     }
 
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     await usage.supabase.from('usage_events').insert({
       user_id: usage.user.id,
       feature: 'teacher',
-      model: process.env.AI_MODEL_CHEAP || 'gpt-5.6-luna',
+      model: process.env.AI_MODEL_CHEAP || 'gemini-2.5-flash-lite',
       units: 1,
     });
 
