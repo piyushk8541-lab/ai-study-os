@@ -10,10 +10,15 @@ const allowedTypes = new Set(['application/pdf', 'text/plain']);
 const nameSchema = z.string().trim().min(1).max(200);
 
 async function extractPdfText(file: File) {
-  const pdfParse = (await import('pdf-parse')).default;
+  const { PDFParse } = await import('pdf-parse');
   const buffer = Buffer.from(await file.arrayBuffer());
-  const parsed = await pdfParse(buffer);
-  return { text: parsed.text?.trim() ?? '', pages: Number(parsed.numpages ?? 0) };
+  const parser = new PDFParse({ data: buffer });
+  try {
+    const parsed = await parser.getText();
+    return { text: parsed.text?.trim() ?? '', pages: Number(parsed.total ?? 0) };
+  } finally {
+    await parser.destroy();
+  }
 }
 
 export async function POST(request: Request) {
