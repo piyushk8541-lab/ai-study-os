@@ -1,17 +1,21 @@
-import { openai } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
 
 export type AITask = "simple" | "standard" | "strong";
 
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
 function modelFor(task: AITask) {
   const modelId =
     task === "strong"
-      ? process.env.AI_MODEL_STRONG || "gpt-5.6-sol"
+      ? process.env.AI_MODEL_STRONG || "gemini-2.5-pro"
       : task === "standard"
-        ? process.env.AI_MODEL_STANDARD || "gpt-5.6-terra"
-        : process.env.AI_MODEL_CHEAP || "gpt-5.6-luna";
+        ? process.env.AI_MODEL_STANDARD || "gemini-2.5-flash"
+        : process.env.AI_MODEL_CHEAP || "gemini-2.5-flash-lite";
 
-  return openai(modelId);
+  return google(modelId);
 }
 
 export async function askStudyAI(input: {
