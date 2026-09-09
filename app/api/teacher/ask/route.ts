@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { askStudyAI } from "../../../../../../lib/ai";
-import { consumeUsage } from "../../../../../../lib/usage";
+import { askStudyAI } from "@/lib/ai";
+import { consumeUsage } from "@/lib/usage";
 
 const schema = z.object({
   question: z.string().trim().min(1).max(12000),
