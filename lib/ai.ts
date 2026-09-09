@@ -10,10 +10,10 @@ const google = createGoogleGenerativeAI({
 function modelFor(task: AITask) {
   const modelId =
     task === "strong"
-      ? process.env.AI_MODEL_STRONG || "gemini-2.5-pro"
+      ? process.env.AI_MODEL_STRONG || "gemini-3.6-flash"
       : task === "standard"
-        ? process.env.AI_MODEL_STANDARD || "gemini-2.5-flash"
-        : process.env.AI_MODEL_CHEAP || "gemini-2.5-flash-lite";
+        ? process.env.AI_MODEL_STANDARD || "gemini-3.6-flash"
+        : process.env.AI_MODEL_CHEAP || "gemini-3.6-flash";
 
   return google(modelId);
 }
