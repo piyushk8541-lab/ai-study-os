@@ -5,9 +5,8 @@ import { uploadStudyMaterial } from '@/lib/storage';
 import { PLAN_LIMITS } from '@/lib/plan';
 
 export const runtime = 'nodejs';
-
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const allowedTypes = new Set(['application/pdf', 'text/plain', 'image/png', 'image/jpeg', 'image/webp']);
+const allowedTypes = new Set(['application/pdf', 'text/plain']);
 const nameSchema = z.string().trim().min(1).max(200);
 
 async function extractPdfText(file: File) {
@@ -20,31 +19,25 @@ async function extractPdfText(file: File) {
 export async function POST(request: Request) {
   const auth = await getAuthenticatedUser();
   if (!auth.user) return NextResponse.json({ error: 'Please log in first.' }, { status: 401 });
-
   const form = await request.formData();
   const rawFile = form.get('file');
   if (!(rawFile instanceof File)) return NextResponse.json({ error: 'Choose a file.' }, { status: 400 });
-  if (!allowedTypes.has(rawFile.type)) return NextResponse.json({ error: 'Only PDF, TXT, PNG, JPG or WEBP files are supported.' }, { status: 400 });
+  if (!allowedTypes.has(rawFile.type)) return NextResponse.json({ error: 'For Study Material, upload a PDF or TXT file. Use AI Scanner for images.' }, { status: 400 });
   if (rawFile.size > MAX_FILE_SIZE) return NextResponse.json({ error: 'Maximum file size is 50 MB.' }, { status: 400 });
-
   const title = nameSchema.safeParse(String(form.get('title') ?? rawFile.name));
   if (!title.success) return NextResponse.json({ error: 'Invalid title.' }, { status: 400 });
 
   let extractedText = '';
-  let pageCount = 0;
+  let pageCount = 1;
   try {
     if (rawFile.type === 'application/pdf') {
       const parsed = await extractPdfText(rawFile);
       extractedText = parsed.text;
       pageCount = parsed.pages;
-      if (pageCount > PLAN_LIMITS[auth.plan].maxPdfPages) {
-        return NextResponse.json({ error: `This file exceeds your ${PLAN_LIMITS[auth.plan].maxPdfPages}-page limit.` }, { status: 403 });
-      }
-    } else if (rawFile.type === 'text/plain') {
-      extractedText = (await rawFile.text()).trim();
-      pageCount = 1;
+      if (pageCount > PLAN_LIMITS[auth.plan].maxPdfPages) return NextResponse.json({ error: `This file exceeds your ${PLAN_LIMITS[auth.plan].maxPdfPages}-page limit.` }, { status: 403 });
     } else {
-      pageCount = 1;
+      extractedText = (await rawFile.text()).trim();
+      if (!extractedText) return NextResponse.json({ error: 'The text file is empty.' }, { status: 422 });
     }
   } catch (error) {
     console.error('Material extraction failed', error);
@@ -57,14 +50,9 @@ export async function POST(request: Request) {
   let storagePath = '';
   try {
     storagePath = await uploadStudyMaterial(auth.user.id, rawFile);
-    const { data: upload, error } = await auth.supabase
-      .from('uploads')
-      .insert({ user_id: auth.user.id, file_name: rawFile.name, mime_type: rawFile.type, storage_key: storagePath, file_size_bytes: rawFile.size, page_count: pageCount || null, processing_status: extractedText ? 'completed' : 'queued', extracted_text: extractedText || null })
-      .select('id,file_name,mime_type,file_size_bytes,page_count,processing_status,created_at')
-      .single();
-
+    const { data: upload, error } = await auth.supabase.from('uploads').insert({ user_id: auth.user.id, file_name: rawFile.name, mime_type: rawFile.type, storage_key: storagePath, file_size_bytes: rawFile.size, page_count: pageCount, processing_status: 'completed', extracted_text: extractedText }).select('id,file_name,mime_type,file_size_bytes,page_count,processing_status,created_at').single();
     if (error) throw error;
-    return NextResponse.json({ upload, extracted: Boolean(extractedText), usage: quota });
+    return NextResponse.json({ upload, extracted: true, usage: quota });
   } catch (error) {
     console.error('Material upload failed', error);
     if (storagePath) await auth.supabase.storage.from('study-materials').remove([storagePath]);
