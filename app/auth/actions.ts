@@ -3,6 +3,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
+function getAppUrl() {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://ai-study-os-iota.vercel.app'
+  ).replace(/\/$/, '');
+}
+
 export async function login(formData: FormData) {
   const supabase = await createClient();
   const email = String(formData.get('email') ?? '').trim();
@@ -29,13 +37,31 @@ export async function signup(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name } },
+    options: {
+      data: { name },
+      emailRedirectTo: `${getAppUrl()}/login`,
+    },
   });
 
   if (error) redirect(`/signup?error=${encodeURIComponent(error.message)}`);
 
   if (data.session) redirect('/dashboard');
   redirect('/login?message=Check%20your%20email%20to%20confirm%20your%20account');
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const supabase = await createClient();
+  const email = String(formData.get('email') ?? '').trim();
+
+  if (!email) redirect('/forgot-password?error=Enter%20your%20email%20address');
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${getAppUrl()}/update-password`,
+  });
+
+  if (error) redirect(`/forgot-password?error=${encodeURIComponent(error.message)}`);
+
+  redirect('/forgot-password?message=Check%20your%20email%20for%20the%20password%20reset%20link');
 }
 
 export async function logout() {
