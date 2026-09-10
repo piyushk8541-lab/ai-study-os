@@ -17,6 +17,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <input name="password" type="password" placeholder="Password" required autoComplete="current-password" style={{ padding: 14, borderRadius: 10, border: '1px solid #ccc' }} />
           <button type="submit" style={{ padding: 14, borderRadius: 10, border: 0, cursor: 'pointer', fontWeight: 700 }}>Login</button>
         </form>
+        <p style={{ marginTop: 14 }}><Link href="/forgot-password">Forgot password?</Link></p>
         <p style={{ marginTop: 20 }}>New here? <Link href="/signup">Create an account</Link></p>
       </div>
     </main>
